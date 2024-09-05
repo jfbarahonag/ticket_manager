@@ -67,3 +67,23 @@ class TicketService:
             return TicketState(state)
         else:
             raise ValueError(f"Error al obtener el ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
+    
+    @staticmethod
+    def get_ticket_data(ticket_id: int) -> TicketState:
+        # Obtener el estado actual del work item de Azure DevOps
+        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.0"
+        response = requests.get(url, headers=create_headers())
+        
+        if response.status_code == 200:
+            data = {}
+            fields = response.json().get("fields", {})
+            data["titulo"] = fields.get("System.Title")
+            data["estado"] = fields.get("System.State")
+            data["ultimoSolicitado"] = fields.get("Custom.Solicitadoen")
+            data["ultimoAsignado"] = fields.get("Custom.Asignado")
+            data["ultimoDevolucion"] = fields.get("Custom.Ultimadevolucion")
+            data["ultimoInicioEvaluacion"] = fields.get("Custom.Inicioevaluacion")
+            data["finEvaluacion"] = fields.get("Custom.Finevaluacion")
+            return data
+        else:
+            raise ValueError(f"Error al obtener el ticket {ticket_id}: {response.status_code} - {response.content.decode()}")

@@ -14,3 +14,12 @@ def move_ticket(ticket_id: int, move_ticket_data: MoveTicketSchema):
         return {"status": "success", "ticket": updated_ticket}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# Endpoint para obtener un ticket
+@router.get("/tickets/{ticket_id}")
+def get_ticket(ticket_id: int):
+    try:
+        ticket = TicketService.get_ticket_data(ticket_id)
+        return ticket
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
