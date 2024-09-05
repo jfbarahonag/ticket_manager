@@ -8,7 +8,7 @@ class TicketState(str, Enum):
     solicitado = "Solicitado"
     devuelto = "Devuelto"
     asignado = "Asignado"
-    en_evaluacion = "En evaluación"
+    en_evaluacion = "En evaluacion"
     aprobado = "Aprobado"
     rechazado = "Rechazado"
 
