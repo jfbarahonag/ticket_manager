@@ -33,7 +33,7 @@ class TicketService:
         }
 
         # Obtener el estado actual del ticket
-        current_state = TicketService.get_ticket_state(ticket_id)
+        current_state = TicketService.get_ticket_data(ticket_id)['estado']
 
         if new_state not in valid_transitions.get(current_state, []):
             raise ValueError(f"No se puede mover el ticket de {current_state} a {new_state}")
@@ -55,19 +55,6 @@ class TicketService:
         else:
             raise ValueError(f"Error al mover el ticket: {response.status_code} - {response.content.decode()}")
 
-    @staticmethod
-    def get_ticket_state(ticket_id: int) -> TicketState:
-        # Obtener el estado actual del work item de Azure DevOps
-        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.0"
-        response = requests.get(url, headers=create_headers())
-
-        if response.status_code == 200:
-            fields = response.json().get("fields", {})
-            state = fields.get("System.State")
-            return TicketState(state)
-        else:
-            raise ValueError(f"Error al obtener el ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
-    
     @staticmethod
     def get_ticket_data(ticket_id: int) -> TicketState:
         # Obtener el estado actual del work item de Azure DevOps
