@@ -75,6 +75,7 @@ class TicketService:
             data["ultimoDevolucion"] = fields.get("Custom.Ultimadevolucion")
             data["ultimoInicioEvaluacion"] = fields.get("Custom.Inicioevaluacion")
             data["finEvaluacion"] = fields.get("Custom.Finevaluacion")
+            data["iteraciones"] = fields.get("Custom.Iteraciones")
             return data
         else:
             raise ValueError(f"Error al obtener el ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
