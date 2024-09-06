@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from app.services.ticket_service import TicketService
 from app.schemas.ticket_schema import MoveTicketSchema, CreateTicketSchema
+from app.schemas.comments_schema import AddCommentSchema
 
 router = APIRouter()
 
@@ -29,5 +30,17 @@ def create_ticket(ticket_data: CreateTicketSchema):
     try:
         new_ticket = TicketService.create_ticket(ticket_data.title, ticket_data.description)
         return {"status": "success", "ticket_id": new_ticket["ticket_id"]}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/tickets/{ticket_id}/comments")
+def add_comment_to_ticket(ticket_id: int, comment_data: AddCommentSchema):
+    try:
+        comment_result = TicketService.add_comment_to_ticket(ticket_id, comment_data.text)
+        return {
+            "status": "success", 
+            "comment_id": comment_result["comment_id"],
+            "comment_text": comment_result["comment_text"]
+        }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

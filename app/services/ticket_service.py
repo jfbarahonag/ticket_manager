@@ -15,9 +15,13 @@ def get_auth_header(username: str, password: str|None = None):
     return f"Basic {auth_base64}"
 
 # Headers de autenticación genérica
-def create_headers(username: str = PAT_TOKEN, password: str = None):
+def create_headers(
+        username: str = PAT_TOKEN, 
+        password: str = None,
+        content_type: str = "application/json-patch+json"
+    ):
     return {
-        "Content-Type": "application/json-patch+json",
+        "Content-Type": content_type,
         "Authorization": get_auth_header(username, password)
     }
 
@@ -90,3 +94,22 @@ class TicketService:
             return {"status": "success", "ticket_id": response.json()["id"]}
         else:
             raise ValueError(f"Error al crear el ticket: {response.status_code} - {response.content.decode()}")
+
+    @staticmethod
+    def add_comment_to_ticket(ticket_id: int, comment: str):
+        # Agregar un comentario a un ticket de Azure DevOps
+        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workItems/{ticket_id}/comments?api-version=7.0-preview.3"
+        payload = {
+            "text": comment
+        }
+
+        response = requests.post(url, headers=create_headers(content_type="application/json"), json=payload)
+
+        if response.status_code in [200, 201]:
+            return {
+                "status": "success", 
+                "comment_id": response.json()["id"],
+                "comment_text": payload["text"]
+            }
+        else:
+            raise ValueError(f"Error al agregar comentario al ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
