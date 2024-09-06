@@ -87,3 +87,19 @@ class TicketService:
             return data
         else:
             raise ValueError(f"Error al obtener el ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
+
+    @staticmethod
+    def create_ticket(title: str, description: str):
+        # Crear un nuevo ticket en Azure DevOps
+        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/$Ticket?api-version=7.0"
+        payload = [
+            {"op": "add", "path": "/fields/System.Title", "value": title},
+            {"op": "add", "path": "/fields/System.Description", "value": description},
+        ]
+
+        response = requests.patch(url, headers=create_headers(), json=payload)
+
+        if response.status_code in [200, 201]:
+            return {"status": "success", "ticket_id": response.json()["id"]}
+        else:
+            raise ValueError(f"Error al crear el ticket: {response.status_code} - {response.content.decode()}")
