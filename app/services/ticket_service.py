@@ -165,4 +165,17 @@ class TicketService:
         # Enviar la solicitud para adjuntar los archivos al ticket
         url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.1"
         response = requests.patch(url, headers=create_headers(), json=relations)
-        return response.json()
+        if response.status_code in [200, 201]:
+            data = response.json()
+            return {
+                "attachments": [
+                    {
+                        "url": r["url"], 
+                        "comment": r["attributes"]["comment"], 
+                        "name": r["attributes"]["name"]
+                    } 
+                    for r in data["relations"]
+                ],
+            }
+        else:
+            raise ValueError(f"Error al adjuntar archivos al ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
