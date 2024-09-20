@@ -1,3 +1,4 @@
+import os
 import base64
 import requests
 from app.models.ticket_model import TicketState
@@ -62,7 +63,7 @@ class TicketService:
     @staticmethod
     def get_ticket_data(ticket_id: int) -> TicketState:
         # Obtener el estado actual del work item de Azure DevOps
-        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.0"
+        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.1"
         response = requests.get(url, headers=create_headers())
         
         if response.status_code == 200:
@@ -114,3 +115,54 @@ class TicketService:
             }
         else:
             raise ValueError(f"Error al agregar comentario al ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
+        
+    @staticmethod
+    def upload_attachment(file_path: str):
+        
+        # Extraer el nombre del archivo de manera compatible con Linux y Windows
+        file_name = os.path.basename(file_path)
+
+        # Construir la URL usando el nombre del archivo extraído
+        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/attachments?fileName={file_name}&api-version=7.1"
+        
+        print(url)
+        
+        with open(file_path, 'rb') as file:
+            response = requests.post(url, headers=create_headers(), data=base64.b64encode(file.read()).decode('utf-8'))
+
+            if response.status_code in [200, 201]:
+                return response.json()["url"]
+            else:
+                raise ValueError(f"Error al subir el archivo: {response.status_code} - {response.content.decode()}")
+
+    # Método para adjuntar múltiples archivos a un ticket
+    @staticmethod
+    def attach_files_to_ticket(ticket_id: int, file_paths: list[str], max_files: int = 10):
+        # Validar que no se exceda el número máximo de archivos permitidos
+        if len(file_paths) > max_files:
+            raise ValueError(f"El número de archivos no puede exceder {max_files}. Archivos recibidos: {len(file_paths)}")
+
+        # Subir cada archivo y adjuntarlo al ticket
+        relations = []
+        for file_path in file_paths:
+            print(file_path)
+            attachment_url = TicketService.upload_attachment(file_path)
+            print(attachment_url, os.path.basename(file_path).split('/')[-1])
+            relations.append({
+                "op": "add",
+                "path": "/relations/-",
+                "value": {
+                    "rel": "AttachedFile",
+                    "url": attachment_url,
+                    "attributes": {
+                        "comment": f"Archivo adjunto: {os.path.basename(file_path).split('/')[-1]}"
+                    }
+                }
+            })
+            
+            print(relations)
+
+        # Enviar la solicitud para adjuntar los archivos al ticket
+        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.1"
+        response = requests.patch(url, headers=create_headers(), json=relations)
+        return response.json()
