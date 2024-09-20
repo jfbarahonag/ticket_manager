@@ -128,7 +128,7 @@ class TicketService:
         print(url)
         
         with open(file_path, 'rb') as file:
-            response = requests.post(url, headers=create_headers(), data=base64.b64encode(file.read()).decode('utf-8'))
+            response = requests.post(url, headers=create_headers(content_type="application/octet-stream"), data=file)
 
             if response.status_code in [200, 201]:
                 return response.json()["url"]
