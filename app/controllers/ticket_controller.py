@@ -21,7 +21,15 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 @router.put("/tickets/{ticket_id}")
 def move_ticket(ticket_id: int, move_ticket_data: MoveTicketSchema):
     try:
-        updated_ticket = TicketService.move_ticket(ticket_id, move_ticket_data.new_state)
+        # Obtener el nuevo estado y el user email opcional
+        new_state = move_ticket_data.new_state
+        user_email = move_ticket_data.user_email
+        
+        # Validar que el user email sea obligatorio si el estado es "Asignado"
+        if (new_state == "Asignado") and not user_email:
+            raise HTTPException(status_code=400, detail=f"El correo del usuario (user_email) es obligatorio cuando el estado es '{new_state}'")
+        
+        updated_ticket = TicketService.move_ticket(ticket_id, new_state, user_email)
         return {"status": "success", "ticket": updated_ticket}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
