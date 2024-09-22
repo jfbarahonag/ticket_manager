@@ -69,12 +69,21 @@ class TicketService:
     def get_ticket_data(ticket_id: int) -> TicketState:
         # Obtener el estado actual del work item de Azure DevOps
         url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?$expand=relations&api-version=7.1"
-        response = requests.get(url, headers=create_headers())
+        url_comments = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}/comments?$api-version=7.1-preview.4"
         
-        if response.status_code == 200:
+        response = requests.get(url, headers=create_headers())
+        response_comments = requests.get(url_comments, headers=create_headers())
+        
+        if response.status_code == 200 and response_comments.status_code == 200:
             data = {}
             fields = response.json().get("fields", {})
             relations = response.json().get("relations", {})
+            comments = [{
+                "id": c['id'], 
+                "text": c['text']
+            } for c in response_comments.json().get("comments", {})]
+            
+            ## DTO
             data["titulo"] = fields.get("System.Title")
             data["estado"] = fields.get("System.State")
             data["ultimoSolicitado"] = fields.get("Custom.Solicitadoen")
@@ -84,6 +93,7 @@ class TicketService:
             data["finEvaluacion"] = fields.get("Custom.Finevaluacion")
             data["iteraciones"] = fields.get("Custom.Iteraciones")
             data["relaciones"] = relations
+            data["comentarios"] = comments
             return data
         else:
             raise ValueError(f"Error al obtener el ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
