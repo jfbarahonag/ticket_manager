@@ -25,7 +25,7 @@ class TicketService:
             raise ValueError(f"No se puede mover el ticket de {current_state} a {new_state}")
 
         # Actualizar el estado en Azure DevOps
-        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.0"
+        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.1"
         payload = [
             {
                 "op": "add",
@@ -74,7 +74,7 @@ class TicketService:
     @staticmethod
     def create_ticket(title: str, description: str):
         # Crear un nuevo ticket en Azure DevOps
-        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/$Ticket?api-version=7.0"
+        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/$Ticket?api-version=7.1"
         payload = [
             {"op": "add", "path": "/fields/System.Title", "value": title},
             {"op": "add", "path": "/fields/System.Description", "value": description},
