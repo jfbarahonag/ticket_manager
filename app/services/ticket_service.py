@@ -1,35 +1,9 @@
 import os
-import base64
 import requests
-from dotenv import load_dotenv
+
 from app.models.ticket_model import TicketState
-
-# Cargar variables de entorno desde .env en desarrollo
-if os.getenv('ENVIRONMENT', 'dev') == 'dev':
-    load_dotenv()  # Carga las variables del archivo .env
-
-# Cargar las variables de entorno
-AZURE_ORG_URL = os.getenv('AZURE_ORG_URL')
-PROJECT_NAME = os.getenv('PROJECT_NAME')
-PAT_TOKEN = os.getenv('PAT_TOKEN')
-
-def get_auth_header(username: str, password: str|None = None):
-    # Concatenar el usuario y la contraseña y codificar en base64
-    auth_string = f"{username}:{password}"
-    auth_bytes = auth_string.encode('ascii')
-    auth_base64 = base64.b64encode(auth_bytes).decode('ascii')
-    return f"Basic {auth_base64}"
-
-# Headers de autenticación genérica
-def create_headers(
-        username: str = PAT_TOKEN, 
-        password: str = None,
-        content_type: str = "application/json-patch+json"
-    ):
-    return {
-        "Content-Type": content_type,
-        "Authorization": get_auth_header(username, password)
-    }
+from app.services.comments_service import CommentsService
+from app.services.common import AZURE_ORG_URL, PROJECT_NAME, create_headers
 
 class TicketService:
     @staticmethod
@@ -78,10 +52,7 @@ class TicketService:
             data = {}
             fields = response.json().get("fields", {})
             relations = response.json().get("relations", {})
-            comments = [{
-                "id": c['id'], 
-                "text": c['text']
-            } for c in response_comments.json().get("comments", {})]
+            comments = CommentsService.get_comments_of_a_ticket(ticket_id).get("comments")
             
             ## DTO
             data["titulo"] = fields.get("System.Title")
@@ -116,22 +87,7 @@ class TicketService:
 
     @staticmethod
     def add_comment_to_ticket(ticket_id: int, comment: str):
-        # Agregar un comentario a un ticket de Azure DevOps
-        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workItems/{ticket_id}/comments?api-version=7.0-preview.3"
-        payload = {
-            "text": comment
-        }
-
-        response = requests.post(url, headers=create_headers(content_type="application/json"), json=payload)
-
-        if response.status_code in [200, 201]:
-            return {
-                "status": "success", 
-                "comment_id": response.json()["id"],
-                "comment_text": payload["text"]
-            }
-        else:
-            raise ValueError(f"Error al agregar comentario al ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
+        return CommentsService.add_comment_to_ticket(ticket_id, comment)
         
     @staticmethod
     def upload_attachment(file_path: str):
