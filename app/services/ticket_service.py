@@ -1,12 +1,17 @@
 import os
 import base64
 import requests
+from dotenv import load_dotenv
 from app.models.ticket_model import TicketState
 
-# URL base de Azure DevOps (ajústalo a tu organización y proyecto)
-AZURE_ORG_URL = ""
-PROJECT_NAME = ""
-PAT_TOKEN = ""  # Tu token de acceso personal (PAT)
+# Cargar variables de entorno desde .env en desarrollo
+if os.getenv('ENVIRONMENT', 'dev') == 'dev':
+    load_dotenv()  # Carga las variables del archivo .env
+
+# Cargar las variables de entorno
+AZURE_ORG_URL = os.getenv('AZURE_ORG_URL')
+PROJECT_NAME = os.getenv('PROJECT_NAME')
+PAT_TOKEN = os.getenv('PAT_TOKEN')
 
 def get_auth_header(username: str, password: str|None = None):
     # Concatenar el usuario y la contraseña y codificar en base64
