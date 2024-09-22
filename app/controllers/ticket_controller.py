@@ -93,3 +93,13 @@ async def attach_files_to_ticket(ticket_id: int, files: List[UploadFile] = File(
             file_location = os.path.join(TEMP_DIR, file.filename)
             file.file.close()
             os.remove(file_location)
+
+# Endpoint que permite eliminar un archivo adjunto de un ticket
+@router.delete("/tickets/{ticket_id}/attachments")
+def remove_attachment_from_ticket(ticket_id: int, attachmentUrl: str):
+    try:
+        # Llamar al servicio para eliminar el archivo adjunto
+        result = TicketService.remove_attachment_from_ticket(ticket_id, attachmentUrl)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
