@@ -105,22 +105,6 @@ class TicketService:
     @staticmethod
     def add_comment_to_ticket(ticket_id: int, comment: str):
         return CommentsService.add_comment_to_ticket(ticket_id, comment)
-        
-        # Extraer el nombre del archivo de manera compatible con Linux y Windows
-        file_name = os.path.basename(file_path)
-
-        # Construir la URL usando el nombre del archivo extraído
-        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/attachments?fileName={file_name}&api-version=7.1"
-        
-        print(url)
-        
-        with open(file_path, 'rb') as file:
-            response = requests.post(url, headers=create_headers(content_type="application/octet-stream"), data=file)
-
-            if response.status_code in [200, 201]:
-                return response.json()["url"]
-            else:
-                raise ValueError(f"Error al subir el archivo: {response.status_code} - {response.content.decode()}")
 
     # Método para adjuntar múltiples archivos a un ticket
     @staticmethod
