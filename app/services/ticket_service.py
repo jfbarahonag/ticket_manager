@@ -9,16 +9,6 @@ from app.services.attachments_service import AttachmentsService
 
 from app.services.common import AZURE_ORG_URL, PROJECT_NAME, create_headers
 
-def get_ticket_object(ticket_object: dict[str, Any]):
-    return {
-        "id": ticket_object["id"],
-        "url": ticket_object["url"],
-        "state": ticket_object["fields"]["System.State"],
-        "title": ticket_object["fields"]["System.Title"],
-        "description": ticket_object["fields"]["System.Description"],
-        "iterations": ticket_object["fields"]["Custom.Iteraciones"],
-    }
-
 class TicketService:
     @staticmethod
     def move_ticket(ticket_id: int, new_state: TicketState,  user_email: Optional[str] = None):
@@ -63,7 +53,7 @@ class TicketService:
         response = requests.patch(url, headers=create_headers(), json=payload)
 
         if response.status_code in [200, 201]:
-            return get_ticket_object(response.json())
+            return TicketService.get_ticket_data(response.json()["id"])
         else:
             raise ValueError(f"Error al mover el ticket: {response.status_code} - {response.content.decode()}")
 
@@ -78,11 +68,13 @@ class TicketService:
         
         if response.status_code == 200 and response_comments.status_code == 200:
             data = {}
-            fields = response.json().get("fields", {})
-            relations = response.json().get("relations", {})
+            basic = response.json()
+            fields = basic.get("fields", {})
+            relations = basic.get("relations", [])
             comments = CommentsService.get_comments_of_a_ticket(ticket_id).get("comments")
             
             ## DTO
+            data["id"] = basic.get("System.Title")
             data["titulo"] = fields.get("System.Title")
             data["estado"] = fields.get("System.State")
             data["ultimoSolicitado"] = fields.get("Custom.Solicitadoen")
@@ -109,13 +101,14 @@ class TicketService:
         response = requests.patch(url, headers=create_headers(), json=payload)
 
         if response.status_code in [200, 201]:
-            return get_ticket_object(response.json())
+            return TicketService.get_ticket_data(response.json()["id"])
         else:
             raise ValueError(f"Error al crear el ticket: {response.status_code} - {response.content.decode()}")
 
     @staticmethod
     def add_comment_to_ticket(ticket_id: int, comment: str):
-        return CommentsService.add_comment_to_ticket(ticket_id, comment)
+        CommentsService.add_comment_to_ticket(ticket_id, comment)
+        return TicketService.get_ticket_data(ticket_id)
 
     # Método para adjuntar múltiples archivos a un ticket
     @staticmethod
@@ -125,7 +118,8 @@ class TicketService:
             raise ValueError(f"El número de archivos no puede exceder {max_files}. Archivos recibidos: {len(file_paths)}")
 
         # Subir cada archivo y adjuntarlo al ticket
-        return AttachmentsService.attach_files_to_ticket(ticket_id, file_paths)
+        AttachmentsService.attach_files_to_ticket(ticket_id, file_paths)
+        return TicketService.get_ticket_data(ticket_id)
 
     @staticmethod
     def find_attachment_relation_index(ticket_id: int, attachment_url: str) -> int:
@@ -146,6 +140,5 @@ class TicketService:
     @staticmethod
     def remove_attachment_from_ticket(ticket_id: int, attachment_url: str):
         attachment_idx = TicketService.find_attachment_relation_index(ticket_id, attachment_url)
-        response = AttachmentsService.remove_attachment_from_ticket(ticket_id, attachment_idx)
-        response["attachment_url"] = attachment_url
-        return response
+        AttachmentsService.remove_attachment_from_ticket(ticket_id, attachment_idx)
+        return TicketService.get_ticket_data(ticket_id)

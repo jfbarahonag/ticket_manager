@@ -62,11 +62,10 @@ def create_ticket(ticket_data: CreateTicketSchema):
 @router.post("/tickets/{ticket_id}/comments")
 def add_comment_to_ticket(ticket_id: int, comment_data: AddCommentSchema):
     try:
-        comment_result = TicketService.add_comment_to_ticket(ticket_id, comment_data.text)
+        result = TicketService.add_comment_to_ticket(ticket_id, comment_data.text)
         return {
             "status": "success", 
-            "comment_id": comment_result["comment_id"],
-            "comment_text": comment_result["comment_text"]
+            "data": result
         }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -98,7 +97,10 @@ async def attach_files_to_ticket(ticket_id: int, files: List[UploadFile] = File(
         result = TicketService.attach_files_to_ticket(ticket_id, file_paths, max_files=max_files)
         
         # Retornar el resultado
-        return {"status": "success", "attachment_result": result}
+        return {
+            "status": "success", 
+            "data": result
+        }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     finally:
@@ -114,6 +116,9 @@ def remove_attachment_from_ticket(ticket_id: int, attachmentUrl: str):
     try:
         # Llamar al servicio para eliminar el archivo adjunto
         result = TicketService.remove_attachment_from_ticket(ticket_id, attachmentUrl)
-        return result
+        return {
+            "status": "success", 
+            "data": result
+        }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
