@@ -1,12 +1,23 @@
 import os
 import requests
 from typing import Optional
+from typing import Any
 
 from app.models.ticket_model import TicketState
 from app.services.comments_service import CommentsService
 from app.services.attachments_service import AttachmentsService
 
 from app.services.common import AZURE_ORG_URL, PROJECT_NAME, create_headers
+
+def get_ticket_object(ticket_object: dict[str, Any]):
+    return {
+        "id": ticket_object["id"],
+        "url": ticket_object["url"],
+        "state": ticket_object["fields"]["System.State"],
+        "title": ticket_object["fields"]["System.Title"],
+        "description": ticket_object["fields"]["System.Description"],
+        "iterations": ticket_object["fields"]["Custom.Iteraciones"],
+    }
 
 class TicketService:
     @staticmethod
@@ -52,7 +63,7 @@ class TicketService:
         response = requests.patch(url, headers=create_headers(), json=payload)
 
         if response.status_code in [200, 201]:
-            return {"status": "success", "ticket_id": ticket_id, "new_state": new_state.value}
+            return get_ticket_object(response.json())
         else:
             raise ValueError(f"Error al mover el ticket: {response.status_code} - {response.content.decode()}")
 
@@ -98,16 +109,7 @@ class TicketService:
         response = requests.patch(url, headers=create_headers(), json=payload)
 
         if response.status_code in [200, 201]:
-            res_obj = response.json()
-            return {
-                "ticket": {
-                    "id": res_obj["id"],
-                    "state": res_obj["fields"]["System.State"],
-                    "url": res_obj["url"],
-                    "title": res_obj["fields"]["System.Title"],
-                    "description": res_obj["fields"]["System.Description"],
-                }
-            }
+            return get_ticket_object(response.json())
         else:
             raise ValueError(f"Error al crear el ticket: {response.status_code} - {response.content.decode()}")
 

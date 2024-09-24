@@ -30,7 +30,10 @@ def move_ticket(ticket_id: int, move_ticket_data: MoveTicketSchema):
             raise HTTPException(status_code=400, detail=f"El correo del usuario (user_email) es obligatorio cuando el estado es '{new_state}'")
         
         updated_ticket = TicketService.move_ticket(ticket_id, new_state, user_email)
-        return {"status": "success", "ticket": updated_ticket}
+        return {
+            "status": "success", 
+            "ticket": updated_ticket
+        }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -39,7 +42,10 @@ def move_ticket(ticket_id: int, move_ticket_data: MoveTicketSchema):
 def get_ticket(ticket_id: int):
     try:
         ticket = TicketService.get_ticket_data(ticket_id)
-        return ticket
+        return {
+            "status": "success",
+            "data": ticket,
+        }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
