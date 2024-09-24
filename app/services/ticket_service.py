@@ -13,10 +13,11 @@ class TicketService:
     def move_ticket(ticket_id: int, new_state: TicketState,  user_email: Optional[str] = None):
         # Validar si el nuevo estado es válido
         valid_transitions = {
+            TicketState.borrador: [TicketState.solicitado],
             TicketState.solicitado: [TicketState.asignado],
-            TicketState.devuelto: [TicketState.solicitado],
             TicketState.asignado: [TicketState.en_evaluacion],
             TicketState.en_evaluacion: [TicketState.devuelto, TicketState.aprobado, TicketState.rechazado],
+            TicketState.devuelto: [TicketState.borrador, TicketState.solicitado],
         }
 
         # Obtener el estado actual del ticket

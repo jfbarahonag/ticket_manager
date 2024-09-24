@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 # Estados posibles de un ticket
 class TicketState(str, Enum):
+    borrador = "Borrador"
     solicitado = "Solicitado"
     devuelto = "Devuelto"
     asignado = "Asignado"
