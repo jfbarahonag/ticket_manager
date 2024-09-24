@@ -48,7 +48,7 @@ def get_ticket(ticket_id: int):
 def create_ticket(ticket_data: CreateTicketSchema):
     try:
         new_ticket = TicketService.create_ticket(ticket_data.title, ticket_data.description)
-        return {"status": "success", "ticket_id": new_ticket["ticket_id"]}
+        return {"status": "success", "data": new_ticket}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

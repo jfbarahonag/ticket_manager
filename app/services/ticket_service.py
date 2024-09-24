@@ -98,7 +98,16 @@ class TicketService:
         response = requests.patch(url, headers=create_headers(), json=payload)
 
         if response.status_code in [200, 201]:
-            return {"status": "success", "ticket_id": response.json()["id"]}
+            res_obj = response.json()
+            return {
+                "ticket": {
+                    "id": res_obj["id"],
+                    "state": res_obj["fields"]["System.State"],
+                    "url": res_obj["url"],
+                    "title": res_obj["fields"]["System.Title"],
+                    "description": res_obj["fields"]["System.Description"],
+                }
+            }
         else:
             raise ValueError(f"Error al crear el ticket: {response.status_code} - {response.content.decode()}")
 
