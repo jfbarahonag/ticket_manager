@@ -61,7 +61,7 @@ class ReversalsService:
     def create(data: CreateReversalSchema):
         try:
             payload = create_payload(data)
-            ticket_data = TicketService.create_ticket("Reversion", payload)
+            ticket_data = TicketService.create_ticket("Reversiones", payload)
             reversal_data = ReversalsService.get(ticket_data["id"])
             return reversal_data
         except ValueError as e:
