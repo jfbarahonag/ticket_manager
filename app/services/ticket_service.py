@@ -58,7 +58,7 @@ class TicketService:
             raise ValueError(f"Error al mover el ticket: {response.status_code} - {response.content.decode()}")
 
     @staticmethod
-    def get_ticket_data(ticket_id: int) -> TicketState:
+    def get_ticket_data(ticket_id: int) -> dict[str, Any]:
         # Obtener el estado actual del work item de Azure DevOps
         url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?$expand=relations&api-version=7.1"
         url_comments = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}/comments?$api-version=7.1-preview.4"
@@ -75,28 +75,19 @@ class TicketService:
             
             ## DTO
             data["id"] = basic.get("System.Title")
-            data["titulo"] = fields.get("System.Title")
-            data["estado"] = fields.get("System.State")
-            data["ultimoSolicitado"] = fields.get("Custom.Solicitadoen")
-            data["ultimoAsignado"] = fields.get("Custom.Asignado")
-            data["ultimoDevolucion"] = fields.get("Custom.Ultimadevolucion")
-            data["ultimoInicioEvaluacion"] = fields.get("Custom.Inicioevaluacion")
-            data["finEvaluacion"] = fields.get("Custom.Finevaluacion")
-            data["iteraciones"] = fields.get("Custom.Iteraciones")
-            data["relaciones"] = relations
-            data["comentarios"] = comments
-            return data
+            data["title"] = fields.get("System.Title")
+            data["state"] = fields.get("System.State")
+            data["relation"] = relations
+            data["comments"] = comments
+            data["azure"] = fields
+            return data.copy()
         else:
             raise ValueError(f"Error al obtener el ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
 
     @staticmethod
-    def create_ticket(title: str, description: str):
+    def create_ticket(type:str, payload: Any):
         # Crear un nuevo ticket en Azure DevOps
-        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/$Ticket?api-version=7.1"
-        payload = [
-            {"op": "add", "path": "/fields/System.Title", "value": title},
-            {"op": "add", "path": "/fields/System.Description", "value": description},
-        ]
+        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/${type}?api-version=7.1"
 
         response = requests.patch(url, headers=create_headers(), json=payload)
 
