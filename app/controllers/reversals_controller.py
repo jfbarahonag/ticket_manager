@@ -17,7 +17,7 @@ TEMP_DIR = os.path.join(os.path.dirname(__file__), 'tmp')
 os.makedirs(TEMP_DIR, exist_ok=True)
 
 # Endpoint para crear un ticket
-@router.post("/")
+@router.post("")
 def create(reversal_data: CreateReversalSchema):
     try:
         new_reversal = ReversalsService.create(reversal_data)

@@ -1,4 +1,4 @@
-import requests
+from typing import Any
 
 from app.schemas.reversal_schema import CreateReversalSchema
 from app.models.reversal_model import ReversalType
@@ -36,24 +36,27 @@ def create_payload(data: CreateReversalSchema):
     
     return payload
 
+def feed_ticket_data(data: dict[str, Any]):
+    azure_data = data["azure"]
+            
+    data["lastTimeInDraft"] = azure_data.get("Custom.Ultimavezenborrador", "")
+    data["lastTimeRequested"] = azure_data.get("Custom.Ultimavezsolicitado", "")
+    data["lastTimeAssigned"] = azure_data.get("Custom.Ultimavezasignado", "")
+    data["lastTimeInEvaluation"] = azure_data.get("Custom.Ultimavezenevaluacion", "")
+    data["lastTimeReturned"] = azure_data.get("Custom.Ultimavezquehubodevolucion", "")
+    data["timeFinishEvaluation"] = azure_data.get("Custom.Findeevaluacion", "")          
+    
+    # remove azure metadata
+    data.pop("azure")
+    
+    return data
+
 class ReversalsService:
     @staticmethod
     def get(reversal_id: int):
         try:
             reversal_data = TicketService.get_ticket_data(reversal_id)
-            
-            reversal_data["lastTimeInDraft"] = reversal_data["azure"]["Custom.Ultimavezenborrador"]
-            reversal_data["lastTimeRequested"] = reversal_data["azure"]["Custom.Ultimavezsolicitado"]
-            reversal_data["lastTimeAssigned"] = reversal_data["azure"]["Custom.Ultimavezasignado"]
-            reversal_data["lastTimeInEvaluation"] = reversal_data["azure"]["Custom.Ultimavezenevaluacion"]
-            reversal_data["lastTimeReturned"] = reversal_data["azure"]["Custom.Ultimavezquehubodevolucion"]
-            reversal_data["timeFinishEvaluation"] = reversal_data["azure"]["Custom.Findeevaluacion"]
-            
-            # remove azure metadata
-            reversal_data.pop("azure")
-            
-            return reversal_data
-            
+            return feed_ticket_data(reversal_data)
         except Exception as e:
             raise ValueError(f"Error al obtener la reversion: {e}")
     
@@ -62,8 +65,7 @@ class ReversalsService:
         try:
             payload = create_payload(data)
             ticket_data = TicketService.create_ticket("Reversiones", payload)
-            reversal_data = ReversalsService.get(ticket_data["id"])
-            return reversal_data
+            return feed_ticket_data(ticket_data)
         except ValueError as e:
             raise ValueError(f"Error al crear la reversion: {e}")
     

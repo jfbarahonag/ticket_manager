@@ -9,6 +9,31 @@ from app.services.attachments_service import AttachmentsService
 
 from app.services.common import AZURE_ORG_URL, PROJECT_NAME, create_headers
 
+def filter_ticket_data(
+    ticket_data, 
+    comments_data = None, 
+    include_comments = False, 
+    include_attachments = False
+):
+    data = {}
+    data["relations"] = []
+    data["comments"] = []
+    
+    fields = ticket_data.get("fields", {})
+    relations = ticket_data.get("relations", [])
+    
+    ## DTO
+    data["id"] = ticket_data.get("id")
+    data["title"] = fields.get("System.Title")
+    data["state"] = fields.get("System.State")
+    if include_attachments:
+        data["relations"] = relations
+    if include_comments and comments_data is not None:
+        data["comments"] = comments_data
+    data["azure"] = fields
+    return data.copy()
+    
+
 class TicketService:
     @staticmethod
     def move_ticket(ticket_id: int, new_state: TicketState,  user_email: Optional[str] = None):
@@ -61,26 +86,13 @@ class TicketService:
     def get_ticket_data(ticket_id: int) -> dict[str, Any]:
         # Obtener el estado actual del work item de Azure DevOps
         url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?$expand=relations&api-version=7.1"
-        url_comments = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}/comments?$api-version=7.1-preview.4"
-        
         response = requests.get(url, headers=create_headers())
-        response_comments = requests.get(url_comments, headers=create_headers())
         
-        if response.status_code == 200 and response_comments.status_code == 200:
-            data = {}
-            basic = response.json()
-            fields = basic.get("fields", {})
-            relations = basic.get("relations", [])
+        if response.status_code == 200:
+            data = response.json()
             comments = CommentsService.get_comments_of_a_ticket(ticket_id).get("comments")
             
-            ## DTO
-            data["id"] = basic.get("System.Title")
-            data["title"] = fields.get("System.Title")
-            data["state"] = fields.get("System.State")
-            data["relation"] = relations
-            data["comments"] = comments
-            data["azure"] = fields
-            return data.copy()
+            return filter_ticket_data(data, comments, True, True)
         else:
             raise ValueError(f"Error al obtener el ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
 
@@ -90,9 +102,10 @@ class TicketService:
         url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/${type}?api-version=7.1"
 
         response = requests.patch(url, headers=create_headers(), json=payload)
+        ticket_data = response.json()
 
         if response.status_code in [200, 201]:
-            return TicketService.get_ticket_data(response.json()["id"])
+            return filter_ticket_data(ticket_data)
         else:
             raise ValueError(f"Error al crear el ticket: {response.status_code} - {response.content.decode()}")
 
