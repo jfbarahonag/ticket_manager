@@ -1,4 +1,3 @@
-import os
 import requests
 from typing import Optional
 from typing import Any
@@ -32,56 +31,8 @@ def filter_ticket_data(
         data["comments"] = comments_data
     data["azure"] = fields
     return data.copy()
-    
 
 class TicketService:
-    @staticmethod
-    def move_ticket(ticket_id: int, new_state: TicketState,  user_email: Optional[str] = None):
-        # Validar si el nuevo estado es válido
-        valid_transitions = {
-            TicketState.borrador: [TicketState.solicitado],
-            TicketState.solicitado: [TicketState.asignado],
-            TicketState.asignado: [TicketState.en_evaluacion],
-            TicketState.en_evaluacion: [TicketState.devuelto, TicketState.aprobado, TicketState.rechazado],
-            TicketState.devuelto: [TicketState.borrador, TicketState.solicitado],
-        }
-
-        # Obtener el estado actual del ticket
-        current_state = TicketService.get_ticket_data(ticket_id)['estado']
-
-        if new_state not in valid_transitions.get(current_state, []):
-            raise ValueError(f"No se puede mover el ticket de {current_state} a {new_state}")
-
-        # Payload básico para actualizar el estado
-        payload = [
-            {
-                "op": "add",
-                "path": "/fields/System.State",
-                "value": new_state.value
-            }
-        ]
-        
-        # Si el nuevo estado es 'Asignado', es obligatorio recibir el 'user email'
-        if new_state == 'Solicitado' or new_state == 'Asignado':
-            if not user_email:
-                raise ValueError(f"El usuario es obligatorio cuando el estado es '{new_state}'")
-            
-            # Agregar al payload la asignación del usuario
-            payload.append({
-                "op": "add",
-                "path": "/fields/System.AssignedTo",
-                "value": user_email
-            })
-
-        # Actualizar el estado en Azure DevOps
-        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.1"
-        response = requests.patch(url, headers=create_headers(), json=payload)
-
-        if response.status_code in [200, 201]:
-            return TicketService.get_ticket_data(response.json()["id"])
-        else:
-            raise ValueError(f"Error al mover el ticket: {response.status_code} - {response.content.decode()}")
-
     @staticmethod
     def get_ticket_data(ticket_id: int) -> dict[str, Any]:
         # Obtener el estado actual del work item de Azure DevOps
@@ -95,7 +46,7 @@ class TicketService:
             return filter_ticket_data(data, comments, True, True)
         else:
             raise ValueError(f"Error al obtener el ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
-
+    
     @staticmethod
     def create_ticket(type:str, payload: Any):
         # Crear un nuevo ticket en Azure DevOps
@@ -108,6 +59,46 @@ class TicketService:
             return filter_ticket_data(ticket_data)
         else:
             raise ValueError(f"Error al crear el ticket: {response.status_code} - {response.content.decode()}")
+
+    @staticmethod
+    def move_ticket(ticket_id: int, new_state: TicketState,  user_email: Optional[str] = None):
+        # Validar si el nuevo estado es válido
+        valid_transitions = {
+            TicketState.borrador: [TicketState.solicitado],
+            TicketState.solicitado: [TicketState.asignado],
+            TicketState.asignado: [TicketState.en_evaluacion],
+            TicketState.en_evaluacion: [TicketState.borrador, TicketState.aprobado, TicketState.rechazado]
+        }
+
+        # Obtener el estado actual del ticket
+        current_state = TicketService.get_ticket_data(ticket_id)['state']
+
+        if new_state not in valid_transitions.get(current_state, []):
+            raise ValueError(f"No se puede mover el ticket de {current_state} a {new_state}")
+
+        # Payload básico para actualizar el estado
+        payload = [
+            {"op": "add","path": "/fields/System.State","value": new_state.value}
+        ]
+        
+        # Si el nuevo estado es 'Asignado', es obligatorio recibir el 'user email'
+        if new_state == 'Asignado':
+            if not user_email:
+                raise ValueError(f"El usuario es obligatorio cuando el estado es '{new_state}'")
+            
+            # Agregar al payload la asignación del usuario
+            payload.append(
+                {"op": "add","path": "/fields/System.AssignedTo","value": user_email
+            })
+
+        # Actualizar el estado en Azure DevOps
+        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.1"
+        response = requests.patch(url, headers=create_headers(), json=payload)
+
+        if response.status_code in [200, 201]:
+            return filter_ticket_data(response.json())
+        else:
+            raise ValueError(f"Error al mover el ticket: {response.status_code} - {response.content.decode()}")
 
     @staticmethod
     def add_comment_to_ticket(ticket_id: int, comment: str):

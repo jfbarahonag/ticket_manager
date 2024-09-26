@@ -7,7 +7,6 @@ from pydantic import BaseModel
 class TicketState(str, Enum):
     borrador = "Borrador"
     solicitado = "Solicitado"
-    devuelto = "Devuelto"
     asignado = "Asignado"
     en_evaluacion = "En evaluacion"
     aprobado = "Aprobado"

@@ -1,7 +1,8 @@
-from typing import Any
+from typing import Any, Optional
 
 from app.schemas.reversal_schema import CreateReversalSchema
 from app.models.reversal_model import ReversalType
+from app.models.ticket_model import TicketState
 
 from app.services.common import AZURE_ORG_URL, PROJECT_NAME, create_headers
 from app.services.comments_service import CommentsService
@@ -69,5 +70,27 @@ class ReversalsService:
         except ValueError as e:
             raise ValueError(f"Error al crear la reversion: {e}")
     
-    def move():
-        pass
+    @staticmethod
+    def move(id: int, new_state: TicketState,  user_email: Optional[str] = None):
+        try:
+            ticket_data = TicketService.move_ticket(id, new_state, user_email)
+            return feed_ticket_data(ticket_data)
+        except ValueError as e:
+            raise ValueError(f"Error al mover la reversion: {e}")
+    
+    @staticmethod
+    def add_comment(id: int, text: str, sender_email: str):
+        try:
+            message = f"{sender_email}: {text}{'.' if text[-1] != '.' else ''}"
+            ticket_data = TicketService.add_comment_to_ticket(id, message)
+            return feed_ticket_data(ticket_data)
+        except ValueError as e:
+            raise ValueError(f"Error al mover la reversion: {e}")
+    
+    @staticmethod
+    def attach_files(id: int, file_paths: list[str], max_files: int = 10):
+        try:
+            ticket_data = TicketService.attach_files_to_ticket(id, file_paths, max_files)
+            return feed_ticket_data(ticket_data)
+        except ValueError as e:
+            raise ValueError(f"Error al mover la reversion: {e}")

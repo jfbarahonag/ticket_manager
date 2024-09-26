@@ -14,10 +14,13 @@ class CommentsService:
         response = requests.post(url, headers=create_headers(content_type="application/json"), json=payload)
 
         if response.status_code in [200, 201]:
-            return {
-                "status": "success", 
-                "comment_id": response.json()["id"],
-                "comment_text": payload["text"]
+            data = response.json()
+            print(data)
+            return { 
+                "author": data["createdBy"]["uniqueName"],
+                "ticket_id": data["workItemId"],
+                "comment_id": data["id"],
+                "comment_text": payload["text"],
             }
         else:
             raise ValueError(f"Error al agregar comentario al ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
@@ -30,7 +33,8 @@ class CommentsService:
         if response.status_code in [200, 201]:
             comments = [{
                 "id": c['id'], 
-                "text": c['text']
+                "text": c['text'],
+                "createdDate": c['createdDate']
             } for c in response.json().get("comments", {})]
             return {
                 "status": "success", 

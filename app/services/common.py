@@ -20,10 +20,10 @@ def get_auth_header(username: str, password: str|None = None):
 
 # Headers de autenticación genérica
 def create_headers(
-        username: str = PAT_TOKEN, 
-        password: str = None,
-        content_type: str = "application/json-patch+json"
-    ):
+    username: str = PAT_TOKEN, 
+    password: str = None,
+    content_type: str = "application/json-patch+json"
+):
     return {
         "Content-Type": content_type,
         "Authorization": get_auth_header(username, password)
