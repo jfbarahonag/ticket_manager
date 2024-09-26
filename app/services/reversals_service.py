@@ -85,7 +85,7 @@ class ReversalsService:
             ticket_data = TicketService.add_comment_to_ticket(id, message)
             return feed_ticket_data(ticket_data)
         except ValueError as e:
-            raise ValueError(f"Error al mover la reversion: {e}")
+            raise ValueError(f"Error al agregar comentario la reversion: {e}")
     
     @staticmethod
     def attach_files(id: int, file_paths: list[str], max_files: int = 10):
@@ -93,4 +93,12 @@ class ReversalsService:
             ticket_data = TicketService.attach_files_to_ticket(id, file_paths, max_files)
             return feed_ticket_data(ticket_data)
         except ValueError as e:
-            raise ValueError(f"Error al mover la reversion: {e}")
+            raise ValueError(f"Error al adjuntar archivos a la reversion: {e}")
+    
+    @staticmethod
+    def remove_attachment(id: int, attachment_url: str):
+        try:
+            ticket_data = TicketService.remove_attachment_from_ticket(id, attachment_url)
+            return feed_ticket_data(ticket_data)
+        except ValueError as e:
+            raise ValueError(f"Error al remover adjunto de la reversion: {e}")

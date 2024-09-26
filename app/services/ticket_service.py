@@ -25,6 +25,7 @@ def filter_ticket_data(
     data["id"] = ticket_data.get("id")
     data["title"] = fields.get("System.Title")
     data["state"] = fields.get("System.State")
+    data["assignedTo"] = fields.get("System.AssignedTo").get("uniqueName")
     if include_attachments:
         data["relations"] = relations
     if include_comments and comments_data is not None:
@@ -88,8 +89,8 @@ class TicketService:
             
             # Agregar al payload la asignación del usuario
             payload.append(
-                {"op": "add","path": "/fields/System.AssignedTo","value": user_email
-            })
+                {"op": "add","path": "/fields/System.AssignedTo","value": user_email}
+            )
 
         # Actualizar el estado en Azure DevOps
         url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.1"
@@ -125,7 +126,7 @@ class TicketService:
         ticket_data = TicketService.get_ticket_data(ticket_id)
 
         # Iterar sobre las relaciones del ticket y encontrar el índice del archivo adjunto
-        relations = ticket_data.get("relaciones", [])
+        relations = ticket_data.get("relations", [])
         for index, relation in enumerate(relations):
             if relation.get("url") == attachment_url and relation.get("rel") == "AttachedFile":
                 return index

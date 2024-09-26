@@ -109,3 +109,16 @@ async def attach_files_to_ticket(reversal_id: int, files: List[UploadFile] = Fil
             file_location = os.path.join(TEMP_DIR, file.filename)
             file.file.close()
             os.remove(file_location)
+
+# Endpoint que permite eliminar un archivo adjunto de un ticket
+@router.delete("/{reversal_id}/attachments")
+def remove_attachment_from_ticket(reversal_id: int, attachmentUrl: str):
+    try:
+        # Llamar al servicio para eliminar el archivo adjunto
+        result = ReversalsService.remove_attachment(reversal_id, attachmentUrl)
+        return {
+            "status": "success", 
+            "data": result
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
