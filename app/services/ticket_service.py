@@ -11,11 +11,9 @@ from app.services.common import AZURE_ORG_URL, PROJECT_NAME, create_headers
 def filter_ticket_data(
     ticket_data, 
     comments_data = None, 
-    include_comments = False, 
-    include_attachments = False
+    include_comments = False
 ):
     data = {}
-    data["relations"] = []
     data["comments"] = []
     
     fields = ticket_data.get("fields", {})
@@ -26,8 +24,15 @@ def filter_ticket_data(
     data["title"] = fields.get("System.Title")
     data["state"] = fields.get("System.State")
     data["assignedTo"] = fields.get("System.AssignedTo").get("uniqueName")
-    if include_attachments:
-        data["relations"] = relations
+    data["attachments"] = [
+        {
+            "resourceCreatedDate": relation["attributes"].get("resourceCreatedDate", ""),
+            "name": relation["attributes"].get("name", "Sin nombre"),
+            "comment": relation["attributes"].get("comment", ""),
+            "url": relation["url"],
+            "id": relation["url"].split("/")[-1],  # Extraer el GUID al final de la URL
+        } for relation in relations if relation["rel"] == "AttachedFile"
+    ]
     if include_comments and comments_data is not None:
         data["comments"] = comments_data
     data["azure"] = fields
@@ -44,7 +49,7 @@ class TicketService:
             data = response.json()
             comments = CommentsService.get_comments_of_a_ticket(ticket_id).get("comments")
             
-            return filter_ticket_data(data, comments, True, True)
+            return filter_ticket_data(data, comments, True)
         else:
             raise ValueError(f"Error al obtener el ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
     
