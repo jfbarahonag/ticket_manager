@@ -13,8 +13,6 @@ class AttachmentsService:
         # Construir la URL usando el nombre del archivo extraído
         url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/attachments?fileName={file_name}&api-version=7.1"
         
-        print(url)
-        
         with open(file_path, 'rb') as file:
             response = requests.post(url, headers=create_headers(content_type="application/octet-stream"), data=file)
 
@@ -76,8 +74,6 @@ class AttachmentsService:
 
         # Hacer la solicitud PATCH para eliminar la relación de adjunto
         response = requests.patch(url, headers=create_headers(), json=payload)
-        
-        print(response)
 
         if response.status_code in [200, 201]:
             return {"status": "success", "ticket_id": ticket_id, "attachment_index": attachment_index}

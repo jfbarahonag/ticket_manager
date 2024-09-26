@@ -15,7 +15,6 @@ class CommentsService:
 
         if response.status_code in [200, 201]:
             data = response.json()
-            print(data)
             return { 
                 "author": data["createdBy"]["uniqueName"],
                 "ticket_id": data["workItemId"],
