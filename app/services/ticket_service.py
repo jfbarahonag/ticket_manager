@@ -21,6 +21,7 @@ def filter_ticket_data(
     
     ## DTO
     data["id"] = ticket_data.get("id")
+    data["area"] = fields.get("System.AreaPath")
     data["title"] = fields.get("System.Title")
     data["state"] = fields.get("System.State")
     data["assignedTo"] = fields.get("System.AssignedTo").get("uniqueName")
@@ -54,9 +55,14 @@ class TicketService:
             raise ValueError(f"Error al obtener el ticket {ticket_id}: {response.status_code} - {response.content.decode()}")
     
     @staticmethod
-    def create_ticket(type:str, payload: Any):
+    def create_ticket(type:str, payload: list):
         # Crear un nuevo ticket en Azure DevOps
         url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/${type}?api-version=7.1"
+        
+        ## TODO: Change this to be dynamic of needed
+        payload.append(
+            {"op": "add", "path": "/fields/System.AreaPath", "value": f"{PROJECT_NAME}\\AC - Sede 1"}
+        )
 
         response = requests.patch(url, headers=create_headers(), json=payload)
         ticket_data = response.json()
@@ -93,9 +99,16 @@ class TicketService:
                 raise ValueError(f"El usuario es obligatorio cuando el estado es '{new_state}'")
             
             # Agregar al payload la asignación del usuario
+            payload.extend([
+                {"op": "add","path": "/fields/System.AssignedTo","value": user_email},
+                ## TODO: Change this to be dynamic of needed
+                {"op": "add","path": "/fields/System.AreaPath","value": f"{PROJECT_NAME}\\AX - Grupo 1"}
+            ])
+        elif new_state == 'Borrador' or new_state == 'Aceptado' or new_state == 'Rechazado':
+            ## TODO: Change this to be dynamic of needed
             payload.append(
-                {"op": "add","path": "/fields/System.AssignedTo","value": user_email}
-            )
+                {"op": "add","path": "/fields/System.AreaPath","value": f"{PROJECT_NAME}\\AC - Sede 1"}
+            )   
 
         # Actualizar el estado en Azure DevOps
         url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.1"

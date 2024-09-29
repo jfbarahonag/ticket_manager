@@ -4,12 +4,10 @@ from app.schemas.reversal_schema import CreateReversalSchema
 from app.models.reversal_model import ReversalType
 from app.models.ticket_model import TicketState
 
-from app.services.common import AZURE_ORG_URL, PROJECT_NAME, create_headers
-from app.services.comments_service import CommentsService
 from app.services.ticket_service import TicketService
 
 def create_payload(data: CreateReversalSchema):
-    title = f"{data.client.NIT}-{data.client.obligationNumber}-{data.data.type}"
+    title = f"{data.client.NIT}-{data.client.obligationNumber}-{data.data.type.value}"
     payload = [
         {"op": "add", "path": "/fields/System.Title", "value": title},
         {"op": "add", "path": "/fields/Custom.Tipo", "value": data.data.type},
