@@ -73,7 +73,7 @@ class TicketService:
             raise ValueError(f"Error al crear el ticket: {response.status_code} - {response.content.decode()}")
 
     @staticmethod
-    def move_ticket(ticket_id: int, new_state: TicketState,  user_email: Optional[str] = None):
+    def move_ticket(ticket_id: int, new_state: TicketState,  user_email: Optional[str] = None, iterations: Optional[int] = None):
         # Validar si el nuevo estado es válido
         valid_transitions = {
             TicketState.borrador: [TicketState.solicitado],
@@ -104,11 +104,16 @@ class TicketService:
                 ## TODO: Change this to be dynamic of needed
                 {"op": "add","path": "/fields/System.AreaPath","value": f"{PROJECT_NAME}\\AX - Grupo 1"}
             ])
-        elif new_state == 'Borrador' or new_state == 'Aceptado' or new_state == 'Rechazado':
+        elif new_state == 'Borrador' or new_state == 'Aprobado' or new_state == 'Rechazado':
             ## TODO: Change this to be dynamic of needed
             payload.append(
                 {"op": "add","path": "/fields/System.AreaPath","value": f"{PROJECT_NAME}\\AC - Sede 1"}
-            )   
+            )
+            if new_state == 'Borrador':
+                payload.append(
+                    {"op": "add","path": "/fields/Custom.Devoluciones","value": f"{iterations + 1}"}
+                )
+                
 
         # Actualizar el estado en Azure DevOps
         url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.1"

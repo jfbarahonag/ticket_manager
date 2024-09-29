@@ -36,8 +36,9 @@ def create_payload(data: CreateReversalSchema):
     return payload
 
 def feed_ticket_data(data: dict[str, Any]):
-    azure_data = data["azure"]
+    azure_data = data.get("azure", {})
             
+    data["iterations"] = azure_data.get("Custom.Devoluciones")
     data["lastTimeInDraft"] = azure_data.get("Custom.Ultimavezenborrador", "")
     data["lastTimeRequested"] = azure_data.get("Custom.Ultimavezsolicitado", "")
     data["lastTimeAssigned"] = azure_data.get("Custom.Ultimavezasignado", "")
@@ -71,7 +72,8 @@ class ReversalsService:
     @staticmethod
     def move(id: int, new_state: TicketState,  user_email: Optional[str] = None):
         try:
-            ticket_data = TicketService.move_ticket(id, new_state, user_email)
+            iterations = ReversalsService.get(id).get("iterations")
+            ticket_data = TicketService.move_ticket(id, new_state, user_email, iterations)
             return feed_ticket_data(ticket_data)
         except ValueError as e:
             raise ValueError(f"Error al mover la reversion: {e}")
