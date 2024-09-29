@@ -11,7 +11,6 @@ class TeamsService:
         # URL para obtener los miembros del equipo
         url = f"{AZURE_ORG_URL}/_apis/projects/{PROJECT_NAME}/teams/{team_name}/members?api-version=7.1"
         # Hacer la solicitud GET para obtener los miembros del equipo
-        print(create_headers())
         response = requests.get(url, headers=create_headers())
 
         if response.status_code == 200:
@@ -34,7 +33,7 @@ class TeamsService:
             raise ValueError(f"Error al obtener los miembros del equipo: {response.status_code} - {response.content.decode()}")
         
     @staticmethod
-    def get_tickets_by_member(team_name: str, user_email: str):
+    def get_tickets_by_member(team_name: str, user_email: str, state: str):
         """
         Obtiene los tickets asignados a un usuario por su correo electrónico.
         """
@@ -44,7 +43,7 @@ class TeamsService:
             "query": f"SELECT [System.Id], [System.Title], [System.State], [System.AssignedTo] "
                      f"FROM WorkItems "
                      f"WHERE [System.AssignedTo] = '{user_email}' "
-                     f"AND [System.State] = 'En evaluacion'"
+                     f"AND [System.State] = '{state}'"
                      f"AND [System.AreaPath] = '{PROJECT_NAME}\\{team_name}'"
         }
 
@@ -54,6 +53,7 @@ class TeamsService:
             work_items = response.json()["workItems"]
             tickets = [{"id": item["id"]} for item in work_items]
             return {
+                "member": user_email,
                 "count": len(tickets),
                 "tickets": tickets    
             }
