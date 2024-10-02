@@ -1,4 +1,5 @@
 from typing import Any, Optional
+from random import randint
 
 from app.schemas.reversal_schema import CreateReversalSchema
 from app.models.reversal_model import ReversalType
@@ -6,11 +7,11 @@ from app.models.ticket_model import TicketState
 
 from app.services.ticket_service import TicketService
 
-def create_payload(data: CreateReversalSchema):
-    title = f"{data.client.NIT}-{data.client.obligationNumber}-{data.data.type.value}"
+def create_payload(data: CreateReversalSchema, draft:bool = False):
+    
+    title = f"RR-{data.client.NIT}-{data.client.obligationNumber}-{''.join([chr(randint(ord('a'), ord('z'))) for _ in range(3)]).upper()}"
     payload = [
         {"op": "add", "path": "/fields/System.Title", "value": title},
-        {"op": "add", "path": "/fields/Custom.Tipo", "value": data.data.type},
         {"op": "add", "path": "/fields/Custom.Razonsocial", "value": data.client.companyName},
         {"op": "add", "path": "/fields/Custom.NIT", "value": data.client.NIT},
         {"op": "add", "path": "/fields/Custom.Nombredeusuario", "value": data.client.username},
@@ -21,13 +22,17 @@ def create_payload(data: CreateReversalSchema):
         {"op": "add", "path": "/fields/Custom.Numerodeobligacion", "value": data.client.obligationNumber},
         {"op": "add", "path": "/fields/Custom.Solicitadopor", "value": data.advisor.email},
     ]
+    if draft is not False:
+        payload.append(
+            {"op": "add", "path": "/fields/Custom.Tipo", "value": data.data.type},
+        )
     
-    if data.data.type == ReversalType.porErroresOperativos:
+    if draft is not False and data.data.type == ReversalType.porErroresOperativos:
         payload.extend([
             {"op": "add", "path": "/fields/Custom.Errores", "value": data.data.byOperational.errors},
             {"op": "add", "path": "/fields/Custom.Medidascorrectivas", "value": data.data.byOperational.correctiveActions},
         ])
-    elif data.data.type == ReversalType.porErroresCliente:
+    elif draft is not False and data.data.type == ReversalType.porErroresCliente:
         ##TODO: Validar si la fecha es mayor a 30 dias debe pedir VoBo R
         payload.extend([
             {"op": "add", "path": "/fields/Custom.Fechadelpagoerroneo", "value": data.data.byClient.dateOfIncorrectPayment},
@@ -64,6 +69,15 @@ class ReversalsService:
     def create(data: CreateReversalSchema):
         try:
             payload = create_payload(data)
+            ticket_data = TicketService.create_ticket("Reversiones", payload)
+            return feed_ticket_data(ticket_data)
+        except ValueError as e:
+            raise ValueError(f"Error al crear la reversion: {e}")
+    
+    @staticmethod
+    def create_draft(data: CreateReversalSchema):
+        try:
+            payload = create_payload(data, draft=True)
             ticket_data = TicketService.create_ticket("Reversiones", payload)
             return feed_ticket_data(ticket_data)
         except ValueError as e:
