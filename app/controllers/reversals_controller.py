@@ -45,12 +45,13 @@ def move_ticket(reversal_id: int, move_ticket_data: MoveReversalSchema):
         # Obtener el nuevo estado y el user email opcional
         new_state = move_ticket_data.new_state
         user_email = move_ticket_data.user_email
+        data = move_ticket_data.data
         
         # Validar que el user email sea obligatorio si el estado es "Asignado"
         if (new_state == "Asignado") and not user_email:
             raise HTTPException(status_code=400, detail=f"El correo del usuario (user_email) es obligatorio cuando el estado es '{new_state}'")
         
-        updated_ticket = ReversalsService.move(reversal_id, new_state, user_email)
+        updated_ticket = ReversalsService.move(reversal_id, new_state, user_email, data)
         return {
             "status": "success", 
             "data": updated_ticket

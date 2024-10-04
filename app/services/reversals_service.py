@@ -2,10 +2,27 @@ from typing import Any, Optional
 from random import randint
 
 from app.schemas.reversal_schema import CreateReversalSchema
-from app.models.reversal_model import ReversalType
+from app.models.reversal_model import ReversalType, ReversalData
 from app.models.ticket_model import TicketState
 
 from app.services.ticket_service import TicketService
+
+def reversal_data_to_payload(data: ReversalData|None):
+    if data is None: return
+    
+    payload = [
+        {"op": "add", "path": "/fields/Custom.Tipo", "value": data.type}
+    ]
+    if data.type == ReversalType.porErroresOperativos:
+        payload.extend([
+            {"op": "add", "path": "/fields/Custom.Errores", "value": data.byOperational.errors},
+            {"op": "add", "path": "/fields/Custom.Medidascorrectivas", "value": data.byOperational.correctiveActions},
+        ])
+    elif data.type == ReversalType.porErroresCliente:
+        payload.extend([
+            {"op": "add", "path": "/fields/Custom.Fechadelpagoerroneo", "value": data.byClient.dateOfIncorrectPayment},
+        ])
+    return payload
 
 def create_payload(data: CreateReversalSchema, draft:bool = False):
     
@@ -84,10 +101,10 @@ class ReversalsService:
             raise ValueError(f"Error al crear la reversion: {e}")
     
     @staticmethod
-    def move(id: int, new_state: TicketState,  user_email: Optional[str] = None):
+    def move(id: int, new_state: TicketState,  user_email: Optional[str] = None, payload: ReversalData = None):
         try:
             iterations = ReversalsService.get(id).get("iterations")
-            ticket_data = TicketService.move_ticket(id, new_state, user_email, iterations)
+            ticket_data = TicketService.move_ticket(id, new_state, user_email, iterations, reversal_data_to_payload(payload))
             return feed_ticket_data(ticket_data)
         except ValueError as e:
             raise ValueError(f"Error al mover la reversion: {e}")

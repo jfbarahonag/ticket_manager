@@ -73,7 +73,8 @@ class TicketService:
             raise ValueError(f"Error al crear el ticket: {response.status_code} - {response.content.decode()}")
 
     @staticmethod
-    def move_ticket(ticket_id: int, new_state: TicketState,  user_email: Optional[str] = None, iterations: Optional[int] = None):
+    def move_ticket(ticket_id: int, new_state: TicketState,  user_email: Optional[str] = None, iterations: Optional[int] = None, payload: Optional[list] = None):
+        if payload is None: payload = []
         # Validar si el nuevo estado es válido
         valid_transitions = {
             TicketState.borrador: [TicketState.solicitado],
@@ -89,7 +90,7 @@ class TicketService:
             raise ValueError(f"No se puede mover el ticket de {current_state} a {new_state}")
 
         # Payload básico para actualizar el estado
-        payload = [
+        payload = payload + [
             {"op": "add","path": "/fields/System.State","value": new_state.value}
         ]
         

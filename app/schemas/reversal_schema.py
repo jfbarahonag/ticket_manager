@@ -9,7 +9,7 @@ from app.schemas.ticket_schema import MoveTicketSchema
 
 # Esquema para mover la reversion de estado
 class MoveReversalSchema(MoveTicketSchema):
-    pass
+    data: Optional[ReversalData] = None
 
 
 # Esquema para crear una nueva reversion
