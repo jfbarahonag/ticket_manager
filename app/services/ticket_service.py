@@ -24,7 +24,7 @@ def filter_ticket_data(
     data["area"] = fields.get("System.AreaPath")
     data["title"] = fields.get("System.Title")
     data["state"] = fields.get("System.State")
-    data["assignedTo"] = fields.get("System.AssignedTo").get("uniqueName")
+    data["assignedTo"] = fields.get("System.AssignedTo").get("uniqueName") if fields.get("System.AssignedTo") else ""
     data["attachments"] = [
         {
             "resourceCreatedDate": relation["attributes"].get("resourceCreatedDate", ""),
@@ -61,7 +61,7 @@ class TicketService:
         
         ## TODO: Change this to be dynamic of needed
         payload.append(
-            {"op": "add", "path": "/fields/System.AreaPath", "value": f"{PROJECT_NAME}\\AC - Sede 1"}
+            {"op": "add", "path": "/fields/System.AreaPath", "value": f"{PROJECT_NAME}\\Asesores"}
         )
 
         response = requests.patch(url, headers=create_headers(), json=payload)
@@ -103,12 +103,12 @@ class TicketService:
             payload.extend([
                 {"op": "add","path": "/fields/System.AssignedTo","value": user_email},
                 ## TODO: Change this to be dynamic of needed
-                {"op": "add","path": "/fields/System.AreaPath","value": f"{PROJECT_NAME}\\AX - Grupo 1"}
+                {"op": "add","path": "/fields/System.AreaPath","value": f"{PROJECT_NAME}\\Auxiliares"}
             ])
         elif new_state == 'Borrador' or new_state == 'Aprobado' or new_state == 'Rechazado':
             ## TODO: Change this to be dynamic of needed
             payload.append(
-                {"op": "add","path": "/fields/System.AreaPath","value": f"{PROJECT_NAME}\\AC - Sede 1"}
+                {"op": "add","path": "/fields/System.AreaPath","value": f"{PROJECT_NAME}\\Asesores"}
             )
             if new_state == 'Borrador':
                 payload.append(

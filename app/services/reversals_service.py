@@ -11,7 +11,7 @@ def reversal_data_to_payload(data: ReversalData|None):
     if data is None: return
     
     payload = [
-        {"op": "add", "path": "/fields/Custom.Tipo", "value": data.type}
+        {"op": "add", "path": "/fields/Custom.Tipodereversion", "value": data.type}
     ]
     if data.type == ReversalType.porErroresOperativos:
         payload.extend([
@@ -41,7 +41,7 @@ def create_payload(data: CreateReversalSchema, draft:bool = False):
     ]
     if draft is not False:
         payload.append(
-            {"op": "add", "path": "/fields/Custom.Tipo", "value": data.data.type},
+            {"op": "add", "path": "/fields/Custom.Tipodereversion", "value": data.data.type},
         )
     
     if draft is not False and data.data.type == ReversalType.porErroresOperativos:
@@ -86,7 +86,7 @@ class ReversalsService:
     def create(data: CreateReversalSchema):
         try:
             payload = create_payload(data)
-            ticket_data = TicketService.create_ticket("Reversiones", payload)
+            ticket_data = TicketService.create_ticket("Reversion", payload)
             return feed_ticket_data(ticket_data)
         except ValueError as e:
             raise ValueError(f"Error al crear la reversion: {e}")
@@ -95,7 +95,7 @@ class ReversalsService:
     def create_draft(data: CreateReversalSchema):
         try:
             payload = create_payload(data, draft=True)
-            ticket_data = TicketService.create_ticket("Reversiones", payload)
+            ticket_data = TicketService.create_ticket("Reversion", payload)
             return feed_ticket_data(ticket_data)
         except ValueError as e:
             raise ValueError(f"Error al crear la reversion: {e}")
