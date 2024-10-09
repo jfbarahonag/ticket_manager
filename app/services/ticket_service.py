@@ -61,7 +61,7 @@ class TicketService:
         
         ## TODO: Change this to be dynamic of needed
         payload.append(
-            {"op": "add", "path": "/fields/System.AreaPath", "value": f"{PROJECT_NAME}\\Asesores"}
+            {"op": "add", "path": "/fields/System.AreaPath", "value": f"{PROJECT_NAME}\\AC - Sede 1"}
         )
 
         response = requests.patch(url, headers=create_headers(), json=payload)
@@ -103,12 +103,12 @@ class TicketService:
             payload.extend([
                 {"op": "add","path": "/fields/System.AssignedTo","value": user_email},
                 ## TODO: Change this to be dynamic of needed
-                {"op": "add","path": "/fields/System.AreaPath","value": f"{PROJECT_NAME}\\Auxiliares"}
+                {"op": "add","path": "/fields/System.AreaPath","value": f"{PROJECT_NAME}\\AX - Grupo 1"}
             ])
         elif new_state == 'Borrador' or new_state == 'Aprobado' or new_state == 'Rechazado':
             ## TODO: Change this to be dynamic of needed
             payload.append(
-                {"op": "add","path": "/fields/System.AreaPath","value": f"{PROJECT_NAME}\\Asesores"}
+                {"op": "add","path": "/fields/System.AreaPath","value": f"{PROJECT_NAME}\\AC - Sede 1"}
             )
             if new_state == 'Borrador':
                 payload.append(
