@@ -59,3 +59,26 @@ class TeamsService:
             }
         else:
             raise ValueError(f"Error al obtener los tickets: {response.status_code} - {response.content.decode()}")
+    
+    @staticmethod
+    def assign_ticket_to_member(team_name: str, user_email: str, ticket_id: int):
+        """
+        Asigna un ticket a un miembro del equipo por su correo electrónico.
+        """
+        # URL para actualizar el ticket
+        url = f"{AZURE_ORG_URL}/{PROJECT_NAME}/_apis/wit/workitems/{ticket_id}?api-version=7.1"
+        # Datos para actualizar el ticket
+        update_data = [
+            { "op": "add", "path": "/fields/System.AssignedTo", "value": user_email },
+            {"op": "add","path": "/fields/System.AreaPath","value": f"{PROJECT_NAME}\\{team_name}"}
+        ]
+
+        response = requests.patch(url, headers=create_headers(), json=update_data)
+
+        if response.status_code == 200:
+            return {
+                "ticket_id": ticket_id,
+                "assigned_to": user_email,
+            }
+        else:
+            raise ValueError(f"Error al asignar el ticket: {response.status_code} - {response.content.decode()}")

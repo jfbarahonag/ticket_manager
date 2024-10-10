@@ -30,7 +30,7 @@ def get_tickets_by_email(team_name: str, member_email: str):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# Endpoint para obtener los tickets asignados de un miembro de un team
+# Endpoint para obtener los tickets asignados de todos los miembros de un team
 @router.get("/{team_name}/members/assigned")
 def get_tickets_by_email(team_name: str):
     try:
@@ -51,6 +51,18 @@ def get_tickets_by_email(team_name: str):
             tickets_data = TeamsService.get_tickets_by_member(team_name, member.get("email"), 'En evaluacion')
             data.append(tickets_data)
             
+        return {
+            "status": "success",
+            "data": data,
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Endpoint para asignar un ticket a un miembro de un team
+@router.put("/{team_name}/members/{member_email}/assign/{ticket_id}")
+def assign_ticket(team_name: str, member_email: str, ticket_id: int):
+    try:
+        data = TeamsService.assign_ticket_to_member(team_name, member_email, ticket_id)
         return {
             "status": "success",
             "data": data,
